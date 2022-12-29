@@ -1,4 +1,5 @@
 import { HttpException, Injectable } from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 
 import { User, Prisma } from '@prisma/client';
 
@@ -8,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
+  @ApiCreatedResponse({ description: 'Create user' })
   async create(data: Prisma.UserCreateInput): Promise<User> {
     try {
       const userCreated = await this.prisma.user.create({
@@ -31,6 +33,7 @@ export class UsersService {
     }
   }
 
+  @ApiOkResponse({ description: 'List users' })
   findAll(params: {
     skip?: number;
     take?: number;
@@ -49,12 +52,14 @@ export class UsersService {
     });
   }
 
+  @ApiOkResponse({ description: 'Find user by unique key' })
   findOne(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: where,
     });
   }
 
+  @ApiOkResponse({ description: 'Update user by unique key' })
   async update(params: {
     where: Prisma.UserWhereUniqueInput;
     data: Prisma.UserUpdateInput;
@@ -66,6 +71,7 @@ export class UsersService {
     });
   }
 
+  @ApiOkResponse({ description: 'Delete user by unique key' })
   remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
     return this.prisma.user.delete({
       where,
