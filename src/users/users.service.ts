@@ -10,13 +10,15 @@ import { PrismaService } from '../prisma/prisma.service';
 export class UsersService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
 
-  //TODO: execute this before anywhere request in this module.
   async onModuleInit(): Promise<void> {
+    //TODO: run only once when building the module
     await this.prisma.$connect();
 
     this.prisma.$use(async (params, next) => {
-      //TODO: execute this before create
+      //TODO: execute always before any database request
+
       if (params.action == 'create' && params.model == 'User') {
+        //TODO: execute on create method prisma to user Model
         const user = params.args.data;
         const salt = bcrypt.genSaltSync(10);
         const hash = bcrypt.hashSync(user.password, salt);
