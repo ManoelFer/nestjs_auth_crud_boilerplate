@@ -1,12 +1,31 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable, OnModuleInit } from '@nestjs/common';
 
 import { User, Prisma } from '@prisma/client';
+
+import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
+
+  //TODO: execute this before anywhere request in this module.
+  async onModuleInit(): Promise<void> {
+    await this.prisma.$connect();
+
+    this.prisma.$use(async (params, next) => {
+      //TODO: execute this before create
+      if (params.action == 'create' && params.model == 'User') {
+        const user = params.args.data;
+        const salt = bcrypt.genSaltSync(10);
+        const hash = bcrypt.hashSync(user.password, salt);
+        user.password = hash;
+        params.args.data = user;
+      }
+      return next(params);
+    });
+  }
 
   async create(data: Prisma.UserCreateInput): Promise<User> {
     try {
