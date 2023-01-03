@@ -6,11 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { Query } from '@nestjs/common/decorators';
 import { HttpException } from '@nestjs/common/exceptions';
-
 import { Prisma } from '@prisma/client';
+
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { exclude } from 'src/helpers/exclude_fields';
 import { CreateUserDto } from './dto/create-user.dto';
 
 import { UsersService } from './users.service';
@@ -24,8 +27,9 @@ export class UsersController {
     return this.usersService.create(data);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(
+  async findAll(
     @Query()
     queryString: {
       skip?: number;
@@ -49,14 +53,30 @@ export class UsersController {
     queryString.where = where ? JSON.parse(where as string) : undefined;
     queryString.orderBy = orderBy ? JSON.parse(orderBy as string) : undefined;
 
-    return this.usersService.findAll(queryString);
+    const users = await this.usersService.findAll(queryString);
+
+    const usersWithoutPassword = [];
+
+    //TODO: how to delete fields in PRISMA according to the documentation: https://www.prisma.io/docs/concepts/components/prisma-client/excluding-fields
+    users.forEach((user) => {
+      const userWithoutPassword = exclude(user, ['password']);
+
+      usersWithoutPassword.push(userWithoutPassword);
+    });
+
+    return usersWithoutPassword;
   }
 
   @Get(':where')
-  findOne(@Param('where') where: Prisma.UserWhereUniqueInput) {
+  async findOne(@Param('where') where: Prisma.UserWhereUniqueInput) {
     where = where ? JSON.parse(where as string) : undefined;
 
-    return this.usersService.findOne(where);
+    const user = await this.usersService.findOne(where);
+
+    //TODO: how to delete fields in PRISMA according to the documentation: https://www.prisma.io/docs/concepts/components/prisma-client/excluding-fields
+    const userWithoutPassword = exclude(user, ['password']);
+
+    return userWithoutPassword;
   }
 
   @Patch(':where')

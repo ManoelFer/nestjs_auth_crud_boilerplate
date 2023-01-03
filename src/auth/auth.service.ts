@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { exclude } from 'src/helpers/exclude_fields';
 
 import { UsersService } from 'src/users/users.service';
 
@@ -13,29 +14,34 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser({ email, password }: AuthLoginDto) {
-    const user = await this.usersService.findOne({ email: email });
+  async validateUser({ username, password }: AuthLoginDto): Promise<any> {
+    const user = await this.usersService.findOne({ email: username });
     const hash = user.password;
 
     const isMatch = await bcrypt.compare(password, hash);
 
     if (user && isMatch) {
-      const payload = { username: user.name, sub: user.id };
-      const access_token = this.jwtService.sign(payload);
-
-      //TODO: return without password
       const { password, ...result } = user;
-
-      return { access_token, user: result };
+      return result;
     }
-
     return null;
   }
 
   async login(user: any) {
-    const payload = { username: user.username, sub: user.userId };
+    const userInDB = await this.usersService.findOne({ email: user.username });
+
+    const payload = {
+      username: user.username,
+      password: user.password,
+      sub: userInDB.id,
+    };
+
+    //TODO: how to delete fields in PRISMA according to the documentation: https://www.prisma.io/docs/concepts/components/prisma-client/excluding-fields
+    const userWithoutPassword = exclude(userInDB, ['password']);
+
     return {
       access_token: this.jwtService.sign(payload),
+      user: userWithoutPassword,
     };
   }
 }
