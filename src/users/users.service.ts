@@ -1,13 +1,40 @@
+<<<<<<< HEAD
 import { HttpException, Injectable } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+=======
+import { HttpException, Injectable, OnModuleInit } from '@nestjs/common';
+>>>>>>> 20c674dd91939bcfd4a073808a4b65ca2e235543
 
 import { User, Prisma } from '@prisma/client';
+
+import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
+
+  
+  async onModuleInit(): Promise<void> {
+    //TODO: run only once when building the module
+    await this.prisma.$connect();
+
+    this.prisma.$use(async (params, next) => {
+      //TODO: execute always before any database request
+
+      if (params.action == 'create' && params.model == 'User') {
+        //TODO: execute on create method prisma to user Model
+        const user = params.args.data;
+        const salt = bcrypt.genSaltSync(10);
+        const hash = bcrypt.hashSync(user.password, salt);
+        user.password = hash;
+        params.args.data = user;
+      }
+      return next(params);
+    });
+  }
+
 
   @ApiCreatedResponse({ description: 'Create user' })
   async create(data: Prisma.UserCreateInput): Promise<User> {
