@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "description": "Nest JS Boilerplate with CRUD users and authentication",
   "license": "MIT",
+  "prisma": {
+    "seed": "yarn ts-node prisma/seed.ts"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -45,7 +48,7 @@
     "@types/bcrypt": "^5.0.0",
     "@types/express": "^4.17.13",
     "@types/jest": "^28.1.4",
-    "@types/node": "^18.0.3",
+    "@types/node": "^18.11.18",
     "@types/passport-local": "^1.0.34",
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^5.30.5",
@@ -60,9 +63,9 @@
     "supertest": "^6.2.4",
     "ts-jest": "^28.0.5",
     "ts-loader": "^9.3.1",
-    "ts-node": "^10.8.2",
+    "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.0.0",
-    "typescript": "^4.7.4"
+    "typescript": "^4.9.4"
   },
   "jest": {
     "moduleFileExtensions": [
