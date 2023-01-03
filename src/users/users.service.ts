@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-import { HttpException, Injectable } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
-=======
 import { HttpException, Injectable, OnModuleInit } from '@nestjs/common';
->>>>>>> 20c674dd91939bcfd4a073808a4b65ca2e235543
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 
 import { User, Prisma } from '@prisma/client';
 
@@ -15,7 +11,6 @@ import { PrismaService } from '../prisma/prisma.service';
 export class UsersService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
 
-  
   async onModuleInit(): Promise<void> {
     //TODO: run only once when building the module
     await this.prisma.$connect();
@@ -34,7 +29,6 @@ export class UsersService implements OnModuleInit {
       return next(params);
     });
   }
-
 
   @ApiCreatedResponse({ description: 'Create user' })
   async create(data: Prisma.UserCreateInput): Promise<User> {
