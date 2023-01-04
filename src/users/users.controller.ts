@@ -8,12 +8,14 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { Query } from '@nestjs/common/decorators';
+import { Query, Request } from '@nestjs/common/decorators';
 import { HttpException } from '@nestjs/common/exceptions';
 import { Prisma } from '@prisma/client';
 
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { exclude } from 'src/helpers/exclude_fields';
+import RolesGuard from 'src/roles/roles.guard';
+import { Role } from 'src/shared/constants/role.enum';
+
+import { exclude } from 'src/shared/helpers/exclude_fields';
 import { CreateUserDto } from './dto/create-user.dto';
 
 import { UsersService } from './users.service';
@@ -27,7 +29,7 @@ export class UsersController {
     return this.usersService.create(data);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(RolesGuard(Role.Admin))
   @Get()
   async findAll(
     @Query()
@@ -38,6 +40,7 @@ export class UsersController {
       where?: Prisma.UserWhereInput;
       orderBy?: Prisma.UserOrderByWithRelationInput;
     },
+    @Request() req: any,
   ) {
     let { skip, take, cursor, where, orderBy } = queryString;
 

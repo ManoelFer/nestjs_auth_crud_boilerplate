@@ -77,6 +77,13 @@ export class UsersService implements OnModuleInit {
   findOne(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: where,
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
     });
   }
 
