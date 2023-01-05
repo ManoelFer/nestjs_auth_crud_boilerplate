@@ -27,7 +27,7 @@ export class UsersRepository implements OnModuleInit {
     });
   }
 
-  async create(data: Prisma.UserCreateInput): Promise<User> {
+  async createUser(data: Prisma.UserCreateInput): Promise<User> {
     try {
       const userCreated = await this.prisma.user.create({
         data,
@@ -50,7 +50,7 @@ export class UsersRepository implements OnModuleInit {
     }
   }
 
-  findAll(params: {
+  users(params: {
     skip?: number;
     take?: number;
     cursor?: Prisma.UserWhereUniqueInput;
@@ -60,8 +60,8 @@ export class UsersRepository implements OnModuleInit {
     return this.prisma.user.findMany(params);
   }
 
-  findOne(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
-    return this.prisma.user.findUnique({
+  async user(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
+    const user = await this.prisma.user.findUnique({
       where: where,
       include: {
         roles: {
@@ -71,9 +71,13 @@ export class UsersRepository implements OnModuleInit {
         },
       },
     });
+
+    if (!user) throw new HttpException('User not found!', 404);
+
+    return user;
   }
 
-  async update(params: {
+  async updateUser(params: {
     where: Prisma.UserWhereUniqueInput;
     data: Prisma.UserUpdateInput;
   }): Promise<User> {
@@ -84,7 +88,7 @@ export class UsersRepository implements OnModuleInit {
     });
   }
 
-  remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
+  deleteUser(where: Prisma.UserWhereUniqueInput): Promise<User> {
     return this.prisma.user.delete({
       where,
     });

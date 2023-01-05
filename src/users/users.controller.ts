@@ -17,6 +17,7 @@ import { Role } from 'src/shared/constants/role.enum';
 
 import { exclude } from 'src/shared/helpers/exclude_fields';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { IUserWithoutPassword } from './interfaces/users.custom.interfaces';
 
 import { UsersService } from './users.service';
@@ -67,7 +68,7 @@ export class UsersController {
   @Patch(':where')
   update(
     @Param('where') where: Prisma.UserWhereUniqueInput,
-    @Body() data: Prisma.UserUpdateInput,
+    @Body() data: UpdateUserDto,
   ) {
     where = where ? JSON.parse(where as string) : undefined;
 

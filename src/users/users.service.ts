@@ -3,6 +3,7 @@ import { HttpException } from '@nestjs/common/exceptions';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 
 import { User, Prisma } from '@prisma/client';
+import { validate_and_transform_params } from 'src/shared/helpers';
 import { exclude } from 'src/shared/helpers/exclude_fields';
 
 import { UsersRepository } from './users.repository';
@@ -13,13 +14,7 @@ export class UsersService {
 
   @ApiCreatedResponse({ description: 'Create user' })
   async create(data: Prisma.UserCreateInput): Promise<User> {
-    try {
-      const userCreated = await this.repo.create(data);
-
-      return userCreated;
-    } catch (error) {
-      throw new Error(error);
-    }
+    return this.repo.createUser(data);
   }
 
   @ApiOkResponse({ description: 'List users' })
@@ -30,21 +25,9 @@ export class UsersService {
     where?: Prisma.UserWhereInput;
     orderBy?: Prisma.UserOrderByWithRelationInput;
   }): Promise<User[]> {
-    const { skip, take, cursor, where, orderBy } = params;
+    const paramsTransformed = validate_and_transform_params(params);
 
-    if (skip && isNaN(Number(skip)))
-      throw new HttpException('skip needs to be a valid number', 400);
-    if (take && isNaN(Number(take)))
-      throw new HttpException('take needs to be a valid number', 400);
-
-    params.skip = Number(skip) || undefined;
-    params.take = Number(take) || undefined;
-
-    params.cursor = cursor ? JSON.parse(cursor as string) : undefined;
-    params.where = where ? JSON.parse(where as string) : undefined;
-    params.orderBy = orderBy ? JSON.parse(orderBy as string) : undefined;
-
-    const users = await this.repo.findAll(params);
+    const users = await this.repo.users(paramsTransformed);
 
     const usersWithoutPassword = [];
 
@@ -60,8 +43,7 @@ export class UsersService {
 
   @ApiOkResponse({ description: 'Find user by unique key' })
   findOne(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
-    console.log('where', where);
-    return this.repo.findOne(where);
+    return this.repo.user(where);
   }
 
   @ApiOkResponse({ description: 'Update user by unique key' })
@@ -69,15 +51,17 @@ export class UsersService {
     where: Prisma.UserWhereUniqueInput;
     data: Prisma.UserUpdateInput;
   }): Promise<User> {
-    const { where, data } = params;
-    return this.repo.update({
-      data,
-      where,
-    });
+    const { where } = params;
+
+    await this.repo.user(where);
+
+    return this.repo.updateUser(params);
   }
 
   @ApiOkResponse({ description: 'Delete user by unique key' })
-  remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
-    return this.repo.remove(where);
+  async remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
+    await this.repo.user(where);
+
+    return this.repo.deleteUser(where);
   }
 }

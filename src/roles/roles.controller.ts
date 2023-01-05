@@ -1,9 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import RolesGuard from './roles.guard';
+import { Role } from 'src/shared/constants/role.enum';
+import { Prisma } from '@prisma/client';
+
+//TODO: Only admins can manipulate roles
 
 @Controller('roles')
+@UseGuards(RolesGuard(Role.Admin))
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
@@ -13,22 +29,39 @@ export class RolesController {
   }
 
   @Get()
-  findAll() {
-    return this.rolesService.findAll();
+  findAll(
+    @Query()
+    queryString: {
+      skip?: number;
+      take?: number;
+      cursor?: Prisma.UserWhereUniqueInput;
+      where?: Prisma.UserWhereInput;
+      orderBy?: Prisma.UserOrderByWithRelationInput;
+    },
+  ) {
+    return this.rolesService.findAll(queryString);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.rolesService.findOne(+id);
+  @Get(':where')
+  findOne(@Param('where') where: Prisma.RoleWhereUniqueInput) {
+    where = where ? JSON.parse(where as string) : undefined;
+
+    return this.rolesService.findOne(where);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
-    return this.rolesService.update(+id, updateRoleDto);
+  @Patch(':where')
+  update(
+    @Param('where') where: Prisma.RoleWhereUniqueInput,
+    @Body() data: UpdateRoleDto,
+  ) {
+    where = where ? JSON.parse(where as string) : undefined;
+    return this.rolesService.updateRole({ where, data });
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.rolesService.remove(+id);
+  @Delete(':where')
+  remove(@Param('where') where: Prisma.RoleWhereUniqueInput) {
+    where = where ? JSON.parse(where as string) : undefined;
+
+    return this.rolesService.remove(where);
   }
 }
