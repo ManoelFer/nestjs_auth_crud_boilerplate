@@ -8,7 +8,7 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { Query, Request } from '@nestjs/common/decorators';
+import { Query } from '@nestjs/common/decorators';
 import { HttpException } from '@nestjs/common/exceptions';
 import { Prisma } from '@prisma/client';
 
@@ -17,6 +17,7 @@ import { Role } from 'src/shared/constants/role.enum';
 
 import { exclude } from 'src/shared/helpers/exclude_fields';
 import { CreateUserDto } from './dto/create-user.dto';
+import { IUserWithoutPassword } from './interfaces/users.custom.interfaces';
 
 import { UsersService } from './users.service';
 
@@ -31,7 +32,7 @@ export class UsersController {
 
   @UseGuards(RolesGuard(Role.Admin))
   @Get()
-  async findAll(
+  findAll(
     @Query()
     queryString: {
       skip?: number;
@@ -40,43 +41,24 @@ export class UsersController {
       where?: Prisma.UserWhereInput;
       orderBy?: Prisma.UserOrderByWithRelationInput;
     },
-    @Request() req: any,
   ) {
-    let { skip, take, cursor, where, orderBy } = queryString;
-
-    if (skip && isNaN(Number(skip)))
-      throw new HttpException('skip needs to be a valid number', 400);
-    if (take && isNaN(Number(take)))
-      throw new HttpException('take needs to be a valid number', 400);
-
-    queryString.skip = Number(skip) || undefined;
-    queryString.take = Number(take) || undefined;
-
-    queryString.cursor = cursor ? JSON.parse(cursor as string) : undefined;
-    queryString.where = where ? JSON.parse(where as string) : undefined;
-    queryString.orderBy = orderBy ? JSON.parse(orderBy as string) : undefined;
-
-    const users = await this.usersService.findAll(queryString);
-
-    const usersWithoutPassword = [];
-
-    //TODO: how to delete fields in PRISMA according to the documentation: https://www.prisma.io/docs/concepts/components/prisma-client/excluding-fields
-    users.forEach((user) => {
-      const userWithoutPassword = exclude(user, ['password']);
-
-      usersWithoutPassword.push(userWithoutPassword);
-    });
-
-    return usersWithoutPassword;
+    return this.usersService.findAll(queryString);
   }
 
   @Get(':where')
-  async findOne(@Param('where') where: Prisma.UserWhereUniqueInput) {
+  async findOne(
+    @Param('where') where: Prisma.UserWhereUniqueInput,
+  ): Promise<IUserWithoutPassword> {
     where = where ? JSON.parse(where as string) : undefined;
 
     const user = await this.usersService.findOne(where);
 
+    if (!user) {
+      throw new HttpException('User not found', 404);
+    }
+
     //TODO: how to delete fields in PRISMA according to the documentation: https://www.prisma.io/docs/concepts/components/prisma-client/excluding-fields
+    //Remove password, before returning to client
     const userWithoutPassword = exclude(user, ['password']);
 
     return userWithoutPassword;

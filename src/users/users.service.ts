@@ -1,61 +1,29 @@
-import { HttpException, Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { HttpException } from '@nestjs/common/exceptions';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 
 import { User, Prisma } from '@prisma/client';
+import { exclude } from 'src/shared/helpers/exclude_fields';
 
-import * as bcrypt from 'bcrypt';
-
-import { PrismaService } from '../prisma/prisma.service';
+import { UsersRepository } from './users.repository';
 
 @Injectable()
-export class UsersService implements OnModuleInit {
-  constructor(private prisma: PrismaService) {}
-
-  async onModuleInit(): Promise<void> {
-    //TODO: run only once when building the module
-    await this.prisma.$connect();
-
-    this.prisma.$use(async (params, next) => {
-      //TODO: execute always before any database request
-
-      if (params.action == 'create' && params.model == 'User') {
-        //TODO: execute on create method prisma to user Model
-        const user = params.args.data;
-        const salt = bcrypt.genSaltSync(10);
-        const hash = bcrypt.hashSync(user.password, salt);
-        user.password = hash;
-        params.args.data = user;
-      }
-      return next(params);
-    });
-  }
+export class UsersService {
+  constructor(private repo: UsersRepository) {}
 
   @ApiCreatedResponse({ description: 'Create user' })
   async create(data: Prisma.UserCreateInput): Promise<User> {
     try {
-      const userCreated = await this.prisma.user.create({
-        data,
-      });
+      const userCreated = await this.repo.create(data);
 
       return userCreated;
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        // The .code property can be accessed in a type-safe manner
-        if (error.code === 'P2002') {
-          const field = error.meta?.target;
-
-          throw new HttpException(
-            `The field {{${field || ''}}} already exists`,
-            400,
-          );
-        }
-      }
-      throw error;
+      throw new Error(error);
     }
   }
 
   @ApiOkResponse({ description: 'List users' })
-  findAll(params: {
+  async findAll(params: {
     skip?: number;
     take?: number;
     cursor?: Prisma.UserWhereUniqueInput;
@@ -64,27 +32,36 @@ export class UsersService implements OnModuleInit {
   }): Promise<User[]> {
     const { skip, take, cursor, where, orderBy } = params;
 
-    return this.prisma.user.findMany({
-      skip,
-      take,
-      cursor,
-      where,
-      orderBy,
+    if (skip && isNaN(Number(skip)))
+      throw new HttpException('skip needs to be a valid number', 400);
+    if (take && isNaN(Number(take)))
+      throw new HttpException('take needs to be a valid number', 400);
+
+    params.skip = Number(skip) || undefined;
+    params.take = Number(take) || undefined;
+
+    params.cursor = cursor ? JSON.parse(cursor as string) : undefined;
+    params.where = where ? JSON.parse(where as string) : undefined;
+    params.orderBy = orderBy ? JSON.parse(orderBy as string) : undefined;
+
+    const users = await this.repo.findAll(params);
+
+    const usersWithoutPassword = [];
+
+    //TODO: how to delete fields in PRISMA according to the documentation: https://www.prisma.io/docs/concepts/components/prisma-client/excluding-fields
+    users.forEach((user) => {
+      const userWithoutPassword = exclude(user, ['password']);
+
+      usersWithoutPassword.push(userWithoutPassword);
     });
+
+    return usersWithoutPassword;
   }
 
   @ApiOkResponse({ description: 'Find user by unique key' })
   findOne(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: where,
-      include: {
-        roles: {
-          include: {
-            role: true,
-          },
-        },
-      },
-    });
+    console.log('where', where);
+    return this.repo.findOne(where);
   }
 
   @ApiOkResponse({ description: 'Update user by unique key' })
@@ -93,7 +70,7 @@ export class UsersService implements OnModuleInit {
     data: Prisma.UserUpdateInput;
   }): Promise<User> {
     const { where, data } = params;
-    return this.prisma.user.update({
+    return this.repo.update({
       data,
       where,
     });
@@ -101,8 +78,6 @@ export class UsersService implements OnModuleInit {
 
   @ApiOkResponse({ description: 'Delete user by unique key' })
   remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
-    return this.prisma.user.delete({
-      where,
-    });
+    return this.repo.remove(where);
   }
 }

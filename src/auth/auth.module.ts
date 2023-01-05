@@ -12,6 +12,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 import { JwtStrategy } from './jwt.strategy';
 import { LocalStrategy } from './local.strategy';
+import { UsersRepository } from 'src/users/users.repository';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { LocalStrategy } from './local.strategy';
     PrismaService,
     LocalStrategy,
     JwtStrategy,
+    UsersRepository,
   ],
 })
 export class AuthModule {}
