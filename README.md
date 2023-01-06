@@ -22,17 +22,25 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+## Este boilerplate contém
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+ 1. Autenticação com JWT
+ 2. Níveis de acesso (administrador e usuário)
+ 3. Conexão com banco de dados SGBD(MySQL)
+ 4. CRUD completo de usuários
+ 5. CRUD completo de níveis de acesso (SOMENTE PARA ADMINS)
+ 6. Gerenciamento dos níveis de acesso de todos os usuários
+ 7. Typescript em todo código
+ 8. Documentação com Swagger
+ 9. Arquivo JSON para importação no insomnia com todos os endpoints. Para importação [clique aqui](https://github.com/ManoelFer/insomnia_nest_auth_crud_boilerplate)
 
-## Installation
+## Instalação das dependências
 
 ```bash
 $ npm install
 ```
 
-## Running the app
+## Execução do servidor
 
 ```bash
 # development
@@ -45,7 +53,7 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
-## Test
+## Testes
 
 ```bash
 # unit tests
