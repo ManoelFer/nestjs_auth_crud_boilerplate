@@ -4,7 +4,7 @@ import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
-export class RoleRepository {
+export class RolesRepository {
   constructor(private prisma: PrismaService) {}
 
   async role(

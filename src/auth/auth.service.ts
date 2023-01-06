@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { exclude } from 'src/shared/helpers/exclude_fields';
+
+import { exclude } from 'src/shared/helpers';
 
 import { UsersService } from 'src/users/users.service';
 

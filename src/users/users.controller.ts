@@ -15,9 +15,12 @@ import { Prisma } from '@prisma/client';
 import RolesGuard from 'src/roles/roles.guard';
 import { Role } from 'src/shared/constants/role.enum';
 
-import { exclude } from 'src/shared/helpers/exclude_fields';
+import { exclude } from 'src/shared/helpers';
+
 import { CreateUserDto } from './dto/create-user.dto';
+import { AccessLevelDto } from './dto/access-level.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+
 import { IUserWithoutPassword } from './interfaces/users.custom.interfaces';
 
 import { UsersService } from './users.service';
@@ -83,5 +86,23 @@ export class UsersController {
     where = where ? JSON.parse(where as string) : undefined;
 
     return this.usersService.remove(where);
+  }
+
+  @UseGuards(RolesGuard(Role.Admin))
+  @Post('access_level/add')
+  addRole(
+    @Body()
+    data: AccessLevelDto,
+  ) {
+    return this.usersService.addAccessLevel(data);
+  }
+
+  @UseGuards(RolesGuard(Role.Admin))
+  @Delete('access_level/remove')
+  removeRole(
+    @Body()
+    data: AccessLevelDto,
+  ) {
+    return this.usersService.deleteAccessLevel(data);
   }
 }

@@ -3,13 +3,11 @@ import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { Prisma, Role } from '@prisma/client';
 import { validate_and_transform_params } from 'src/shared/helpers';
 
-import { CreateRoleDto } from './dto/create-role.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
-import { RoleRepository } from './roles.repository';
+import { RolesRepository } from './roles.repository';
 
 @Injectable()
 export class RolesService {
-  constructor(private repo: RoleRepository) {}
+  constructor(private repo: RolesRepository) {}
 
   @ApiOkResponse({ description: 'List roles' })
   async findAll(params: {

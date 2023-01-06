@@ -3,6 +3,7 @@ import { Prisma, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from 'src/prisma/prisma.service';
+import { IUserWithRoles } from './interfaces/users.custom.interfaces';
 
 @Injectable()
 export class UsersRepository implements OnModuleInit {
@@ -28,6 +29,23 @@ export class UsersRepository implements OnModuleInit {
   }
 
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
+    //TODO: all new users starting with user role
+    data = {
+      ...data,
+      roles: {
+        create: [
+          {
+            createdAt: new Date(),
+            role: {
+              connect: {
+                name: 'user',
+              },
+            },
+          },
+        ],
+      },
+    };
+
     try {
       const userCreated = await this.prisma.user.create({
         data,
@@ -60,7 +78,9 @@ export class UsersRepository implements OnModuleInit {
     return this.prisma.user.findMany(params);
   }
 
-  async user(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
+  async user(
+    where: Prisma.UserWhereUniqueInput,
+  ): Promise<IUserWithRoles | null> {
     const user = await this.prisma.user.findUnique({
       where: where,
       include: {
@@ -81,16 +101,33 @@ export class UsersRepository implements OnModuleInit {
     where: Prisma.UserWhereUniqueInput;
     data: Prisma.UserUpdateInput;
   }): Promise<User> {
-    const { where, data } = params;
-    return this.prisma.user.update({
-      data,
-      where,
-    });
+    return this.prisma.user.update(params);
   }
 
   deleteUser(where: Prisma.UserWhereUniqueInput): Promise<User> {
     return this.prisma.user.delete({
       where,
+    });
+  }
+
+  addRoleOnUser({ userId, roleId }) {
+    return this.prisma.usersOnRoles.create({
+      data: {
+        createdAt: new Date(),
+        userId: userId,
+        roleId: roleId,
+      },
+    });
+  }
+
+  deleteRoleOnUser({ userId, roleId }) {
+    return this.prisma.usersOnRoles.deleteMany({
+      where: {
+        userId: userId,
+        AND: {
+          roleId: roleId,
+        },
+      },
     });
   }
 }
